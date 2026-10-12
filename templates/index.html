@@ -1,1 +1,232 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tic-Tac-Toe (Minimax Algorithm)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f6f9;
+            padding-top: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        /* First Player Selection Bar */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .controls label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls select {
+            padding: 6px 12px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            background-color: #333;
+            border: 4px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cell.x {
+            color: #dc3545; /* Red for AI */
+        }
+
+        .cell.o {
+            color: #0d6efd; /* Blue for Human */
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            height: 30px;
+            color: #333;
+        }
+
+        .btn-restart {
+            margin-top: 15px;
+            padding: 10px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-restart:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Unbeatable AI Tic-Tac-Toe</h1>
+    <p>Human = <b>O</b> | AI Bot = <b>X</b> (Minimax Engine)</p>
+
+    <!-- First Player Selection -->
+    <div class="controls">
+        <label for="firstPlayer">First Player:</label>
+        <select id="firstPlayer" onchange="resetGame()">
+            <option value="human">Human (You)</option>
+            <option value="ai">AI Bot</option>
+        </select>
+    </div>
+
+    <!-- 3x3 Grid -->
+    <div class="board" id="board">
+        <div class="cell" onclick="humanMove(0)"></div>
+        <div class="cell" onclick="humanMove(1)"></div>
+        <div class="cell" onclick="humanMove(2)"></div>
+        <div class="cell" onclick="humanMove(3)"></div>
+        <div class="cell" onclick="humanMove(4)"></div>
+        <div class="cell" onclick="humanMove(5)"></div>
+        <div class="cell" onclick="humanMove(6)"></div>
+        <div class="cell" onclick="humanMove(7)"></div>
+        <div class="cell" onclick="humanMove(8)"></div>
+    </div>
+
+    <div id="status">Your Turn!</div>
+    <button class="btn-restart" onclick="resetGame()">Restart Game</button>
+
+    <script>
+        let boardState = ["", "", "", "", "", "", "", "", ""];
+        let gameOver = false;
+        let isAiTurn = false;
+
+        // Initialize board state on load
+        window.onload = () => {
+            resetGame();
+        };
+
+        async function humanMove(index) {
+            if (boardState[index] !== "" || gameOver || isAiTurn) return;
+
+            // Player 'O' places move
+            boardState[index] = "O";
+            updateBoardUI();
+
+            // Hand turn over to AI
+            requestAiMove();
+        }
+
+        async function requestAiMove() {
+            isAiTurn = true;
+            document.getElementById('status').innerText = "AI Bot is thinking...";
+
+            try {
+                const response = await fetch('/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ board: boardState })
+                });
+
+                const data = await response.json();
+                boardState = data.board;
+                updateBoardUI();
+                isAiTurn = false;
+
+                // Handle end game state
+                if (data.status === 'X') {
+                    document.getElementById('status').innerText = "AI Bot Wins! (Minimax Unbeatable)";
+                    gameOver = true;
+                } else if (data.status === 'O') {
+                    document.getElementById('status').innerText = "You Win!";
+                    gameOver = true;
+                } else if (data.status === 'Draw') {
+                    document.getElementById('status').innerText = "Game Draw!";
+                    gameOver = true;
+                } else {
+                    document.getElementById('status').innerText = "Your Turn!";
+                }
+
+            } catch (error) {
+                document.getElementById('status').innerText = "Error connecting to server.";
+                isAiTurn = false;
+            }
+        }
+
+        function updateBoardUI() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, i) => {
+                cell.innerText = boardState[i];
+                cell.className = 'cell';
+                if (boardState[i] === 'X') cell.classList.add('x', 'disabled');
+                if (boardState[i] === 'O') cell.classList.add('o', 'disabled');
+                if (isAiTurn || gameOver) cell.classList.add('disabled');
+            });
+        }
+
+        function resetGame() {
+            boardState = ["", "", "", "", "", "", "", "", ""];
+            gameOver = false;
+            isAiTurn = false;
+            
+            const selectedFirst = document.getElementById('firstPlayer').value;
+
+            if (selectedFirst === 'ai') {
+                updateBoardUI();
+                requestAiMove(); // Trigger AI opening move automatically
+            } else {
+                updateBoardUI();
+                document.getElementById('status').innerText = "Your Turn!";
+            }
+        }
+    </script>
+</body>
+</html>
