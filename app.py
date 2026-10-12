@@ -1,8 +1,3 @@
-# =====================================================================
-# PROJECT: Web-Based Tic-Tac-Toe using Minimax Algorithm
-# TECH STACK: Python (Flask Backend) + HTML/CSS/JS (Frontend)
-# FEATURES: First-Player Selection (Human / AI Bot), Optimal Minimax
-# =====================================================================
 
 from flask import Flask, render_template, request, jsonify
 
